@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Daily Warrior Discipline Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--black:#080808;--deep:#0D0D0D;--surface:#111111;--surface2:#161616;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);--gold:#C9963A;--gold2:#E8B86D;--gold-dim:rgba(201,150,58,0.15);--gold-glow:rgba(201,150,58,0.4);--green:#2ECC71;--red:#E74C3C;--blue:#3B82F6;--blue-dim:rgba(59,130,246,0.12);--teal:#14B8A6;--teal-dim:rgba(20,184,166,0.12);--purple:#8B5CF6;--purple-dim:rgba(139,92,246,0.12);--orange:#F97316;--orange-dim:rgba(249,115,22,0.12);--white:#FFFFFF;--text:rgba(255,255,255,0.88);--text-soft:rgba(255,255,255,0.5);--text-dim:rgba(255,255,255,0.3);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Crimson Pro',serif;background:var(--black);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.4;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--deep);}::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
+
+/* HEADER */
+.site-header{position:relative;border-bottom:1px solid var(--border);overflow:hidden;}
+.hbg{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(201,150,58,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 50%,rgba(139,92,246,0.05) 0%,transparent 60%),linear-gradient(180deg,#0D0D0D 0%,#080808 100%);}
+.h-inner{position:relative;display:flex;align-items:center;justify-content:space-between;padding:18px 18px;gap:14px;flex-wrap:wrap;}
+.h-left .h-badge{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);opacity:0.8;margin-bottom:3px;}
+.h-title{font-family:'Cinzel',serif;font-size:clamp(16px,4vw,24px);font-weight:900;color:var(--white);line-height:1;letter-spacing:2px;}
+.h-title span{color:var(--gold);}
+.h-sub{font-family:'Crimson Pro',serif;font-size:12px;font-style:italic;color:var(--text-soft);margin-top:3px;}
+
+/* DATE NAV */
+.h-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.date-nav{display:flex;align-items:center;gap:8px;}
+.nav-btn{background:rgba(201,150,58,0.1);border:1px solid rgba(201,150,58,0.3);color:var(--gold2);width:30px;height:30px;border-radius:5px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;line-height:1;}
+.nav-btn:hover{background:rgba(201,150,58,0.22);box-shadow:0 0 8px rgba(201,150,58,0.3);}
+.nav-btn:disabled{opacity:0.22;pointer-events:none;cursor:default;}
+.nav-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-soft);min-width:110px;text-align:center;line-height:1.5;}
+.nav-date .dn{font-family:'Cinzel',serif;font-size:15px;color:var(--gold2);display:block;letter-spacing:1px;}
+.past-pill{display:none;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:1.5px;background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);color:#E74C3C;padding:2px 8px;border-radius:3px;text-align:center;}
+.past-pill.show{display:inline-block;}
+
+/* SCORE RING */
+.ring-wrap{position:relative;width:60px;height:60px;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:4;}
+.ring-fill{fill:none;stroke:var(--gold);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--gold2);line-height:1;}
+.ring-lbl{font-size:7px;color:var(--text-dim);letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
+
+/* QUOTE */
+.quote-bar{background:linear-gradient(90deg,transparent,rgba(201,150,58,0.12),transparent);border-top:1px solid rgba(201,150,58,0.18);border-bottom:1px solid rgba(201,150,58,0.18);padding:10px 18px;text-align:center;}
+.quote-text{font-family:'Crimson Pro',serif;font-size:13px;font-style:italic;color:var(--gold2);}
+
+/* MAIN */
+.wrap{max-width:900px;margin:0 auto;padding:22px 14px 60px;}
+
+/* SEC HEADER */
+.sh{display:flex;align-items:center;gap:11px;margin-bottom:11px;margin-top:26px;}
+.sh-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.sh-wrap{flex:1;}
+.sh-title{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;}
+.sh-sub{font-size:12px;font-style:italic;color:var(--text-dim);}
+.sh-prog{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);}
+.sh-prog b{color:var(--gold2);}
+
+/* PRAYER CARDS */
+.pg{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+@media(max-width:460px){.pg{grid-template-columns:repeat(3,1fr);}}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 7px;text-align:center;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));transform:scaleX(0);transition:transform 0.3s;}
+.pc:hover::before,.pc.done::before{transform:scaleX(1);}
+.pc.done{border-color:rgba(201,150,58,0.4);background:linear-gradient(135deg,rgba(201,150,58,0.1) 0%,var(--surface) 100%);}
+.pc-tick{position:absolute;top:5px;right:5px;width:13px;height:13px;background:var(--gold);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:7px;color:var(--black);font-weight:700;}
+.pc.done .pc-tick{display:flex;}
+.pc-icon{font-size:19px;margin-bottom:4px;display:block;}
+.pc-name{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text-soft);text-transform:uppercase;}
+.pc.done .pc-name{color:var(--gold2);}
+.pc-ar{font-size:12px;color:var(--text-dim);margin-top:2px;direction:rtl;}
+.pc.done .pc-ar{color:var(--gold);}
+.pc-j{font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text-dim);margin-top:2px;}
+.pc.done .pc-j{color:var(--green);}
+
+/* CHECK ITEMS */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:7px;}
+.cg2{grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
+.ci{position:relative;display:flex;align-items:flex-start;gap:11px;padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.25s;user-select:none;}
+.ci:hover{border-color:var(--border2);background:var(--surface2);}
+.ci.checked{border-color:rgba(46,204,113,0.3);background:linear-gradient(135deg,rgba(46,204,113,0.06) 0%,var(--surface) 100%);}
+.ci.checked::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green);border-radius:8px 0 0 8px;}
+.cb{width:19px;height:19px;border-radius:5px;border:1.5px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all 0.2s;}
+.ci.checked .cb{background:var(--green);border-color:var(--green);}
+.cbx{display:none;color:#fff;font-size:10px;font-weight:700;}
+.ci.checked .cbx{display:block;}
+.ic{flex:1;min-width:0;}
+.il{font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);line-height:1.35;}
+.il strong{font-weight:600;color:var(--white);}
+.im{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:2px;}
+.ib{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:500;padding:2px 7px;border-radius:3px;letter-spacing:1px;flex-shrink:0;margin-top:2px;align-self:flex-start;}
+
+/* VP */
+.vpg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+@media(max-width:460px){.vpg{grid-template-columns:repeat(3,1fr);}}
+.vpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 5px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.vpi:hover{border-color:var(--border2);}
+.vpi.done{border-color:rgba(139,92,246,0.35);background:rgba(139,92,246,0.08);}
+.vp-n{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;}
+.vpi.done .vp-n{color:var(--purple);}
+.vp-c{font-family:'Cinzel',serif;font-size:16px;color:var(--text-soft);margin:3px 0;line-height:1;}
+.vpi.done .vp-c{color:var(--gold2);}
+.vp-s{font-size:9px;color:var(--text-dim);font-style:italic;}
+.vpi.done .vp-s{color:var(--green);}
+
+/* QURAN */
+.qg{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+@media(max-width:460px){.qg{grid-template-columns:1fr;}}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;transition:all 0.25s;}
+.qcard.done{border-color:rgba(139,92,246,0.4);background:linear-gradient(135deg,rgba(139,92,246,0.08) 0%,var(--surface) 100%);}
+.qt{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:7px;}
+.qcard.done .qt{color:var(--purple);}
+.qi-wrap{display:flex;gap:7px;align-items:center;}
+.qi{background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:7px 9px;color:var(--text);font-family:'Crimson Pro',serif;font-size:13px;flex:1;outline:none;transition:border-color 0.2s;}
+.qi:focus{border-color:var(--purple);}
+.qi::placeholder{color:var(--text-dim);}
+.qbtn{background:var(--purple-dim);border:1px solid rgba(139,92,246,0.3);color:var(--purple);padding:7px 11px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.qcard.done .qbtn{background:rgba(46,204,113,0.15);border-color:rgba(46,204,113,0.4);color:var(--green);}
+.qst{margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);}
+.qst b{color:var(--purple);}
+
+/* DISTRACTION */
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:7px;}
+.di{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:9px;}
+.di:hover{border-color:var(--border2);}
+.di.pass{border-color:rgba(46,204,113,0.35);background:rgba(46,204,113,0.06);}
+.di.fail{border-color:rgba(231,76,60,0.35);background:rgba(231,76,60,0.06);}
+.dtog{width:33px;height:18px;background:rgba(255,255,255,0.1);border-radius:9px;position:relative;flex-shrink:0;transition:all 0.2s;}
+.dtog::after{content:'';position:absolute;top:3px;left:3px;width:12px;height:12px;background:var(--text-dim);border-radius:50%;transition:all 0.2s;}
+.di.pass .dtog{background:rgba(46,204,113,0.3);}
+.di.pass .dtog::after{left:18px;background:var(--green);}
+.di.fail .dtog{background:rgba(231,76,60,0.3);}
+.di.fail .dtog::after{background:var(--red);}
+.dl{font-family:'Crimson Pro',serif;font-size:13px;color:var(--text-soft);}
+.di.pass .dl{color:var(--text);}
+
+/* RATINGS */
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px;}
+.rw{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;}
+.rl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px;}
+.sr{display:flex;gap:5px;align-items:center;}
+.star{font-size:19px;cursor:pointer;transition:all 0.15s;filter:grayscale(1) brightness(0.5);}
+.star.lit{filter:none;}
+.star:hover{transform:scale(1.2);}
+.rv{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2);margin-left:5px;}
+
+/* NOTES */
+.na{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:7px;}
+.nl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.ni{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;line-height:1.6;resize:none;min-height:56px;}
+.ni::placeholder{color:var(--text-dim);font-style:italic;}
+
+/* GOALS */
+.gw{display:flex;flex-direction:column;gap:7px;}
+.gr{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:11px;}
+.gn{font-family:'Cinzel',serif;font-size:16px;font-weight:900;color:var(--gold-glow);flex-shrink:0;width:21px;}
+.gi{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;font-style:italic;}
+.gi::placeholder{color:var(--text-dim);}
+
+/* SCORE CARDS */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;margin-top:7px;}
+.sc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 13px;text-align:center;}
+.sc-v{font-family:'Cinzel',serif;font-size:24px;font-weight:900;line-height:1;}
+.sc-l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-top:3px;}
+.sc-s{font-size:11px;font-style:italic;color:var(--text-dim);margin-top:2px;}
+
+/* MENTOR */
+.mb{background:linear-gradient(135deg,rgba(201,150,58,0.08),rgba(201,150,58,0.03));border:1px solid rgba(201,150,58,0.25);border-radius:10px;padding:15px 19px;position:relative;overflow:hidden;margin-top:13px;}
+.mb::before{content:'❝';position:absolute;top:-10px;left:13px;font-size:52px;color:var(--gold);opacity:0.07;font-family:serif;line-height:1;}
+.mt{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.mm{font-family:'Crimson Pro',serif;font-size:14px;font-style:italic;color:var(--text);line-height:1.7;}
+.mm b{color:var(--gold2);font-style:normal;}
+
+/* ACTION BAR */
+.ab{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:12px 17px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:26px;flex-wrap:wrap;}
+.ab-l{font-family:'Crimson Pro',serif;font-size:13px;color:var(--text-soft);font-style:italic;}
+.bs{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;color:var(--black);padding:9px 20px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;}
+.bs:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,150,58,0.4);}
+.br{background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);color:var(--red);padding:9px 16px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.br:hover{background:rgba(231,76,60,0.2);}
+
+/* COMPLETE */
+.cb-banner{display:none;text-align:center;padding:18px;background:linear-gradient(135deg,rgba(46,204,113,0.1),rgba(46,204,113,0.04));border:1px solid rgba(46,204,113,0.3);border-radius:10px;margin-bottom:18px;}
+.cb-banner.show{display:block;}
+.cb-t{font-family:'Cinzel',serif;font-size:13px;color:var(--green);letter-spacing:2px;margin-bottom:4px;}
+.cb-s{font-size:13px;font-style:italic;color:var(--text-soft);}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:26px 0;}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--surface2);border:1px solid rgba(46,204,113,0.4);border-radius:8px;padding:10px 17px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;z-index:9999;transform:translateY(65px);opacity:0;transition:all 0.3s ease;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@media(max-width:440px){.h-inner{padding:13px 13px;}.wrap{padding:18px 11px 50px;}.cg{grid-template-columns:1fr;}.qg{grid-template-columns:1fr;}.dg{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="hbg"></div>
+  <div class="h-inner">
+    <div class="h-left">
+      <div class="h-badge">Daily Warrior System</div>
+      <div class="h-title">THE <span>DISCIPLINE</span> TRACKER</div>
+      <div class="h-sub">Martial Arts · Islamic Practice · Peak Performance</div>
+    </div>
+    <div class="h-right">
+      <div class="date-nav">
+        <button class="nav-btn" id="btnPrev" onclick="changeDay(-1)">&#8592;</button>
+        <div class="nav-date">
+          <span class="dn" id="navDay">—</span>
+          <span id="navDateStr">—</span>
+          <div class="past-pill" id="pastPill">PAST DAY</div>
+        </div>
+        <button class="nav-btn" id="btnNext" onclick="changeDay(1)" disabled>&#8594;</button>
+      </div>
+    </div>
+    <div class="ring-wrap">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <circle class="ring-bg" cx="30" cy="30" r="26"/>
+        <circle class="ring-fill" id="ringFill" cx="30" cy="30" r="26" stroke-dasharray="163" stroke-dashoffset="163"/>
+      </svg>
+      <div class="ring-text">
+        <span class="ring-pct" id="ringPct">0%</span>
+        <span class="ring-lbl" id="ringLbl">TODAY</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="quote-bar"><div class="quote-text" id="quoteText">Loading warrior code…</div></div>
+
+<div class="wrap">
+  <div class="cb-banner" id="completeBanner">
+    <div class="cb-t">⚔ FULL WARRIOR DAY ACHIEVED ⚔</div>
+    <div class="cb-s">"You have earned today. Do it again tomorrow."</div>
+  </div>
+
+  <!-- 1. PRAYER -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(201,150,58,0.15);">🕌</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--gold);">Prayer & Worship</div><div class="sh-sub">Foundation of every warrior's day</div></div>
+    <div class="sh-prog">Prayers: <b id="prayerCount">0</b>/5</div>
+  </div>
+  <div class="pg">
+    <div class="pc" id="pc0" onclick="togglePrayer(0)"><div class="pc-tick">✓</div><span class="pc-icon">🌙</span><div class="pc-name">Fajr</div><div class="pc-ar">الفجر</div><div class="pc-j">With Jama'ah</div></div>
+    <div class="pc" id="pc1" onclick="togglePrayer(1)"><div class="pc-tick">✓</div><span class="pc-icon">☀️</span><div class="pc-name">Dhuhr</div><div class="pc-ar">الظهر</div><div class="pc-j">With Jama'ah</div></div>
+    <div class="pc" id="pc2" onclick="togglePrayer(2)"><div class="pc-tick">✓</div><span class="pc-icon">🌤️</span><div class="pc-name">Asr</div><div class="pc-ar">العصر</div><div class="pc-j">With Jama'ah</div></div>
+    <div class="pc" id="pc3" onclick="togglePrayer(3)"><div class="pc-tick">✓</div><span class="pc-icon">🌆</span><div class="pc-name">Maghrib</div><div class="pc-ar">المغرب</div><div class="pc-j">With Jama'ah</div></div>
+    <div class="pc" id="pc4" onclick="togglePrayer(4)"><div class="pc-tick">✓</div><span class="pc-icon">🌙</span><div class="pc-name">Isha</div><div class="pc-ar">العشاء</div><div class="pc-j">With Jama'ah</div></div>
+  </div>
+  <div style="margin-top:7px;">
+    <div class="ci" id="ci-jumuah" onclick="toggleItem('jumuah')" style="border-radius:8px;">
+      <div class="cb"><span class="cbx">✓</span></div>
+      <div class="ic"><div class="il"><strong>Friday Jumu'ah Prayer</strong> — in congregation</div><div class="im">Ghusl · Arrived early · Khutbah · Surah Al-Kahf</div></div>
+      <span class="ib" style="background:var(--gold-dim);color:var(--gold2);">JUMU'AH</span>
+    </div>
+  </div>
+
+  <!-- 2. QURAN -->
+  <div class="sh">
+    <div class="sh-icon" style="background:rgba(139,92,246,0.15);">📖</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--purple);">Quran Recitation & Memorization</div><div class="sh-sub">Let the words of Allah be your daily armour</div></div>
+  </div>
+  <div class="qg">
+    <div class="qcard" id="qc-recite"><div class="qt">📖 Daily Recitation</div><div class="qi-wrap"><input class="qi" id="qi-recite" type="text" placeholder="Surah / pages recited…"/><button class="qbtn" onclick="markQuran('qc-recite','qi-recite','qst-recite',0)">Done ✓</button></div><div class="qst" id="qst-recite">— Record what you recited today</div></div>
+    <div class="qcard" id="qc-memorize"><div class="qt">🧠 Memorization Log</div><div class="qi-wrap"><input class="qi" id="qi-memorize" type="text" placeholder="Verse/Surah memorized…"/><button class="qbtn" onclick="markQuran('qc-memorize','qi-memorize','qst-memorize',1)">Done ✓</button></div><div class="qst" id="qst-memorize">— Minimum: 2 verses today</div></div>
+  </div>
+  <div class="sh" style="margin-top:18px;">
+    <div class="sh-icon" style="background:rgba(139,92,246,0.12);">🤲</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--purple);font-size:10px;">2 Verses After Every Salah</div><div class="sh-sub">Tap each prayer after memorizing</div></div>
+    <div class="sh-prog">Done: <b id="vpCount">0</b>/5</div>
+  </div>
+  <div class="vpg">
+    <div class="vpi" id="vp-fajr" onclick="toggleVP('vp-fajr')"><div class="vp-n">Fajr</div><div class="vp-c">2</div><div class="vp-s">verses</div></div>
+    <div class="vpi" id="vp-dhuhr" onclick="toggleVP('vp-dhuhr')"><div class="vp-n">Dhuhr</div><div class="vp-c">2</div><div class="vp-s">verses</div></div>
+    <div class="vpi" id="vp-asr" onclick="toggleVP('vp-asr')"><div class="vp-n">Asr</div><div class="vp-c">2</div><div class="vp-s">verses</div></div>
+    <div class="vpi" id="vp-maghrib" onclick="toggleVP('vp-maghrib')"><div class="vp-n">Maghrib</div><div class="vp-c">2</div><div class="vp-s">verses</div></div>
+    <div class="vpi" id="vp-isha" onclick="toggleVP('vp-isha')"><div class="vp-n">Isha</div><div class="vp-c">2</div><div class="vp-s">verses</div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 3. FITNESS -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(249,115,22,0.15);">⚔️</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--orange);">Martial Arts & Physical Training</div><div class="sh-sub">The warrior's body is a weapon — sharpen it daily</div></div>
+    <div class="sh-prog">Done: <b id="fitCount">0</b>/5</div>
+  </div>
+  <div class="cg">
+    <div class="ci" id="ci-meditation" onclick="toggleItem('meditation')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>5-Min Meditation</strong> / Deep Breathing</div><div class="im">Focus · Breath control · Mental clarity</div></div><span class="ib" style="background:var(--teal-dim);color:var(--teal);">MIND</span></div>
+    <div class="ci" id="ci-conditioning" onclick="toggleItem('conditioning')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>20-Min Martial Arts</strong> Body Conditioning</div><div class="im">Strikes · Kicks · Core · Circuits</div></div><span class="ib" style="background:var(--orange-dim);color:var(--orange);">COMBAT</span></div>
+    <div class="ci" id="ci-footwork" onclick="toggleItem('footwork')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Fighting Bounce</strong> & Shadow Footwork</div><div class="im">Stance · Lateral movement · Rhythm</div></div><span class="ib" style="background:var(--orange-dim);color:var(--orange);">FOOTWORK</span></div>
+    <div class="ci" id="ci-strength" onclick="toggleItem('strength')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Strength & Mobility</strong> Exercises</div><div class="im">Push-ups · Pull-ups · Squats · Hip mobility</div></div><span class="ib" style="background:var(--orange-dim);color:var(--orange);">STRENGTH</span></div>
+    <div class="ci" id="ci-shadowbox" onclick="toggleItem('shadowbox')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Shadow Boxing</strong> / Technique Drills</div><div class="im">Combinations · Defence · Counter-attacks</div></div><span class="ib" style="background:var(--orange-dim);color:var(--orange);">TECHNIQUE</span></div>
+  </div>
+  <div class="na"><div class="nl">⚔ Training Notes</div><textarea class="ni" id="trainingNotes" placeholder="What did you train today? PRs, improvements, areas to drill harder…" rows="2"></textarea></div>
+
+  <div class="divider"></div>
+
+  <!-- 4. SEO -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(59,130,246,0.15);">📈</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--blue);">SEO Learning & Professional Work</div><div class="sh-sub">Build mastery one focused session at a time</div></div>
+    <div class="sh-prog">Done: <b id="seoCount">0</b>/4</div>
+  </div>
+  <div class="cg cg2">
+    <div class="ci" id="ci-seoCourse" onclick="toggleItem('seoCourse')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>SEO Course</strong> Learning Session</div><div class="im">Watch · Take notes · Understand deeply</div></div><span class="ib" style="background:var(--blue-dim);color:var(--blue);">LEARN</span></div>
+    <div class="ci" id="ci-seoPractical" onclick="toggleItem('seoPractical')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>SEO Practical</strong> Work & Implementation</div><div class="im">Apply what you learned · On-page · Technical</div></div><span class="ib" style="background:var(--blue-dim);color:var(--blue);">APPLY</span></div>
+    <div class="ci" id="ci-keyword" onclick="toggleItem('keyword')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Keyword Research</strong> Practice</div><div class="im">Find keywords · Analyze intent · Map content</div></div><span class="ib" style="background:var(--blue-dim);color:var(--blue);">RESEARCH</span></div>
+    <div class="ci" id="ci-seoReview" onclick="toggleItem('seoReview')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>SEO Progress Review</strong> — What moved today?</div><div class="im">Rankings · Traffic · Next action step</div></div><span class="ib" style="background:var(--blue-dim);color:var(--blue);">REVIEW</span></div>
+  </div>
+  <div class="na"><div class="nl">📊 SEO Work Log</div><textarea class="ni" id="seoNotes" placeholder="What did you learn or implement? Key insights, results, next focus…" rows="2"></textarea></div>
+
+  <div class="divider"></div>
+
+  <!-- 5. DISTRACTION -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(231,76,60,0.15);">📵</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--red);">Mobile Distraction Control</div><div class="sh-sub">Your phone is a tool, not a master</div></div>
+  </div>
+  <div class="dg">
+    <div class="di" id="d-morning" onclick="toggleDistract('d-morning')"><div class="dtog"></div><div class="dl">No phone first 60 min after Fajr</div></div>
+    <div class="di" id="d-prayer" onclick="toggleDistract('d-prayer')"><div class="dtog"></div><div class="dl">Phone off during prayers</div></div>
+    <div class="di" id="d-work" onclick="toggleDistract('d-work')"><div class="dtog"></div><div class="dl">Deep work — no social media</div></div>
+    <div class="di" id="d-family" onclick="toggleDistract('d-family')"><div class="dtog"></div><div class="dl">Phone away during family time</div></div>
+    <div class="di" id="d-night" onclick="toggleDistract('d-night')"><div class="dtog"></div><div class="dl">No phone 1hr before sleep</div></div>
+    <div class="di" id="d-scroll" onclick="toggleDistract('d-scroll')"><div class="dtog"></div><div class="dl">No mindless scrolling today</div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 6. FAMILY -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(20,184,166,0.15);">👨‍👩‍👦</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--teal);">Family Leadership & Children</div><div class="sh-sub">Your greatest legacy is the family you lead</div></div>
+    <div class="sh-prog">Done: <b id="famCount">0</b>/4</div>
+  </div>
+  <div class="cg cg2">
+    <div class="ci" id="ci-familyTime" onclick="toggleItem('familyTime')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Family Quality Time</strong> — fully present</div><div class="im">Phone away · Eye contact · Full attention</div></div><span class="ib" style="background:var(--teal-dim);color:var(--teal);">FAMILY</span></div>
+    <div class="ci" id="ci-sonTime" onclick="toggleItem('sonTime')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Play with Your Son</strong> — be the fun dad</div><div class="im">Physical play · Laughter · Bonding · Memories</div></div><span class="ib" style="background:var(--teal-dim);color:var(--teal);">SON</span></div>
+    <div class="ci" id="ci-teachChildren" onclick="toggleItem('teachChildren')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Teach or Guide</strong> Your Children</div><div class="im">Quran · Adab · Life skills · Islamic values</div></div><span class="ib" style="background:var(--teal-dim);color:var(--teal);">TEACH</span></div>
+    <div class="ci" id="ci-familyDua" onclick="toggleItem('familyDua')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Family Du'a</strong> — pray together</div><div class="im">Lead your family in supplication</div></div><span class="ib" style="background:var(--teal-dim);color:var(--teal);">DU'A</span></div>
+  </div>
+  <div class="na"><div class="nl">💚 Family Reflection</div><textarea class="ni" id="familyNotes" placeholder="How did you show up for your family today? What moment will they remember?…" rows="2"></textarea></div>
+
+  <div class="divider"></div>
+
+  <!-- 7. PRODUCTIVITY -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(201,150,58,0.15);">⚡</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--gold);">Productivity & Discipline</div><div class="sh-sub">Accountability separates warriors from wishers</div></div>
+  </div>
+  <div class="cg cg2">
+    <div class="ci" id="ci-topThree" onclick="toggleItem('topThree')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Top 3 Priorities</strong> completed from yesterday's plan</div><div class="im">Did you execute on what mattered most?</div></div><span class="ib" style="background:var(--gold-dim);color:var(--gold2);">EXECUTE</span></div>
+    <div class="ci" id="ci-deepWork" onclick="toggleItem('deepWork')"><div class="cb"><span class="cbx">✓</span></div><div class="ic"><div class="il"><strong>Deep Work Block</strong> — 90+ min uninterrupted</div><div class="im">No notifications · Single task · Max output</div></div><span class="ib" style="background:var(--gold-dim);color:var(--gold2);">FOCUS</span></div>
+  </div>
+  <div class="sh" style="margin-top:20px;">
+    <div class="sh-icon" style="background:rgba(201,150,58,0.12);">🔱</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--gold);font-size:10px;">Mental Toughness Check</div><div class="sh-sub">Rate your mental state today</div></div>
+  </div>
+  <div class="rg">
+    <div class="rw"><div class="rl">Discipline Level</div><div class="sr" id="sr-discipline"><span class="star" onclick="setRating('discipline',1)">⚡</span><span class="star" onclick="setRating('discipline',2)">⚡</span><span class="star" onclick="setRating('discipline',3)">⚡</span><span class="star" onclick="setRating('discipline',4)">⚡</span><span class="star" onclick="setRating('discipline',5)">⚡</span><span class="rv" id="rv-discipline">—</span></div></div>
+    <div class="rw"><div class="rl">Focus & Concentration</div><div class="sr" id="sr-focus"><span class="star" onclick="setRating('focus',1)">🎯</span><span class="star" onclick="setRating('focus',2)">🎯</span><span class="star" onclick="setRating('focus',3)">🎯</span><span class="star" onclick="setRating('focus',4)">🎯</span><span class="star" onclick="setRating('focus',5)">🎯</span><span class="rv" id="rv-focus">—</span></div></div>
+    <div class="rw"><div class="rl">Spiritual Connection</div><div class="sr" id="sr-spiritual"><span class="star" onclick="setRating('spiritual',1)">🌙</span><span class="star" onclick="setRating('spiritual',2)">🌙</span><span class="star" onclick="setRating('spiritual',3)">🌙</span><span class="star" onclick="setRating('spiritual',4)">🌙</span><span class="star" onclick="setRating('spiritual',5)">🌙</span><span class="rv" id="rv-spiritual">—</span></div></div>
+    <div class="rw"><div class="rl">Energy & Vitality</div><div class="sr" id="sr-energy"><span class="star" onclick="setRating('energy',1)">🔥</span><span class="star" onclick="setRating('energy',2)">🔥</span><span class="star" onclick="setRating('energy',3)">🔥</span><span class="star" onclick="setRating('energy',4)">🔥</span><span class="star" onclick="setRating('energy',5)">🔥</span><span class="rv" id="rv-energy">—</span></div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 8. NIGHT REVIEW -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(139,92,246,0.15);">🌑</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--purple);">Night Review & Tomorrow's Goals</div><div class="sh-sub">The warrior who reflects grows — who doesn't, repeats</div></div>
+  </div>
+  <div class="na" style="border-color:rgba(139,92,246,0.2);">
+    <div class="nl" style="color:var(--purple);">🌑 Night Reflection</div>
+    <textarea class="ni" id="nightReview" placeholder="What did I do well? Where did I fall short? What will I do differently? What am I grateful for?" rows="4"></textarea>
+  </div>
+  <div class="sh">
+    <div class="sh-icon" style="background:rgba(201,150,58,0.15);">🎯</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--gold);">Tomorrow's Top 3 Goals</div><div class="sh-sub">Win before you wake — plan the night before</div></div>
+  </div>
+  <div class="gw">
+    <div class="gr"><span class="gn">01</span><input class="gi" id="goal1" type="text" placeholder="Most important mission tomorrow…"/></div>
+    <div class="gr"><span class="gn">02</span><input class="gi" id="goal2" type="text" placeholder="Second priority tomorrow…"/></div>
+    <div class="gr"><span class="gn">03</span><input class="gi" id="goal3" type="text" placeholder="Third goal — still matters…"/></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SCORE SUMMARY -->
+  <div class="sh" style="margin-top:0;">
+    <div class="sh-icon" style="background:rgba(201,150,58,0.15);">📊</div>
+    <div class="sh-wrap"><div class="sh-title" style="color:var(--gold);">Today's Performance Score</div><div class="sh-sub">Every number tells a story — own it</div></div>
+  </div>
+  <div class="sc-grid">
+    <div class="sc-card"><div class="sc-v" id="scOverall" style="color:var(--gold2);">0%</div><div class="sc-l">Overall Score</div><div class="sc-s" id="scGrade">—</div></div>
+    <div class="sc-card"><div class="sc-v" id="scPrayer" style="color:var(--gold);">0/5</div><div class="sc-l">Prayers</div><div class="sc-s">With Jama'ah</div></div>
+    <div class="sc-card"><div class="sc-v" id="scFit" style="color:var(--orange);">0/5</div><div class="sc-l">Fitness</div><div class="sc-s">Train daily</div></div>
+    <div class="sc-card"><div class="sc-v" id="scSeo" style="color:var(--blue);">0/4</div><div class="sc-l">SEO Work</div><div class="sc-s">Build mastery</div></div>
+    <div class="sc-card"><div class="sc-v" id="scFam" style="color:var(--teal);">0/4</div><div class="sc-l">Family</div><div class="sc-s">Greatest legacy</div></div>
+    <div class="sc-card"><div class="sc-v" id="scQuran" style="color:var(--purple);">0/5</div><div class="sc-l">Quran Verses</div><div class="sc-s">2 per prayer</div></div>
+  </div>
+  <div class="mb">
+    <div class="mt">⚔ Your Discipline Mentor Says:</div>
+    <div class="mm" id="mentorMsg">Complete your checklist. <b>Every item you check is a vote for the person you are becoming.</b> Discipline isn't motivation — it is commitment honored even when you don't feel like it. Rise.</div>
+  </div>
+  <div class="ab">
+    <div class="ab-l">Last saved: <span id="lastSaved">Never</span></div>
+    <div style="display:flex;gap:8px;">
+      <button class="br" onclick="confirmReset()">↺ Reset Day</button>
+      <button class="bs" id="saveBtn" onclick="saveProgress()">SAVE PROGRESS ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Progress saved</div>
+
+<script>
+const QUOTES=['\"Discipline is the bridge between goals and accomplishment. Pray with focus. Train with fury. Lead with love.\"','\"The strongest among you is not he who throws others, but he who controls himself in anger.\" — Prophet Muhammad ﷺ','\"In the morning, a warrior does not ask how he feels. He rises, makes wudu, and answers the call.\"','\"A man who masters himself — in prayer, in training, in family — has mastered the greatest battlefield.\"','\"Your children do not need a perfect father. They need a present, striving, faithful one.\"','\"Champions are made in the moments when they want to quit but choose to continue.\"','\"Seek knowledge from the cradle to the grave.\" — Prophet Muhammad ﷺ','\"The body of a warrior is trained in the gym. The soul of a warrior is trained in sujood.\"','\"Do not grieve. Indeed, Allah is with us.\" — Quran 9:40','\"Train so hard that rest feels earned. Pray so deeply that the world feels small.\"'];
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const RL={1:'Weak',2:'Below par',3:'Solid',4:'Strong',5:'Elite'};
+
+let offset=0;
+
+function dateAt(o){const d=new Date();d.setDate(d.getDate()+o);return d;}
+function skey(o){return'wt4_'+dateAt(o).toDateString();}
+function blank(){return{prayers:[false,false,false,false,false],items:{},vpItems:{},distracts:{},ratings:{discipline:0,focus:0,spiritual:0,energy:0},qrDone:false,qrVal:'',qmDone:false,qmVal:'',notes:{training:'',seo:'',family:'',night:''},goals:['','','']};}
+
+let S=blank();
+
+function loadS(){try{const r=localStorage.getItem(skey(offset));S=r?{...blank(),...JSON.parse(r)}:blank();}catch(e){S=blank();}}
+function saveS(){
+  S.notes.training=document.getElementById('trainingNotes').value;
+  S.notes.seo=document.getElementById('seoNotes').value;
+  S.notes.family=document.getElementById('familyNotes').value;
+  S.notes.night=document.getElementById('nightReview').value;
+  S.goals=[document.getElementById('goal1').value,document.getElementById('goal2').value,document.getElementById('goal3').value];
+  S.qrVal=document.getElementById('qi-recite').value;
+  S.qmVal=document.getElementById('qi-memorize').value;
+  try{localStorage.setItem(skey(offset),JSON.stringify(S));}catch(e){}
+}
+function saveProgress(){saveS();const n=new Date();document.getElementById('lastSaved').textContent=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});showToast();}
+function confirmReset(){const l=offset===0?"today's":dateAt(offset).toDateString()+"'s";if(!confirm('Reset progress for '+l+' day?'))return;S=blank();try{localStorage.removeItem(skey(offset));}catch(e){}renderAll();}
+
+function changeDay(delta){const n=offset+delta;if(n>0)return;offset=n;loadS();renderDate();renderAll();updateNav();}
+function updateNav(){
+  document.getElementById('btnNext').disabled=(offset===0);
+  document.getElementById('pastPill').classList.toggle('show',offset<0);
+  document.getElementById('saveBtn').textContent=offset===0?'SAVE PROGRESS ✓':'SAVE THIS DAY ✓';
+  document.getElementById('ringLbl').textContent=offset===0?'TODAY':'PAST';
+}
+function renderDate(){
+  const d=dateAt(offset);
+  document.getElementById('navDay').textContent=DAYS[d.getDay()];
+  let ds=d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
+  if(offset===-1)ds+=' (Yesterday)';
+  else if(offset<-1)ds+=' ('+Math.abs(offset)+' days ago)';
+  document.getElementById('navDateStr').textContent=ds;
+}
+
+function togglePrayer(i){S.prayers[i]=!S.prayers[i];document.getElementById('pc'+i).classList.toggle('done',S.prayers[i]);updateScores();saveS();}
+function toggleItem(id){S.items[id]=!S.items[id];document.getElementById('ci-'+id).classList.toggle('checked',S.items[id]);updateScores();saveS();}
+function toggleVP(id){S.vpItems[id]=!S.vpItems[id];document.getElementById(id).classList.toggle('done',S.vpItems[id]);updateScores();saveS();}
+
+function markQuran(cardId,inputId,statusId,type){
+  const val=document.getElementById(inputId).value.trim();
+  if(!val){document.getElementById(inputId).focus();return;}
+  document.getElementById(cardId).classList.add('done');
+  if(type===0){S.qrDone=true;S.qrVal=val;document.getElementById(statusId).innerHTML='✓ <b>Recorded:</b> '+val;}
+  else{S.qmDone=true;S.qmVal=val;document.getElementById(statusId).innerHTML='✓ <b>Memorized:</b> '+val;}
+  updateScores();saveS();
+}
+
+function toggleDistract(id){
+  const c=S.distracts[id],el=document.getElementById(id);
+  if(!c){S.distracts[id]='pass';el.className='di pass';}
+  else if(c==='pass'){S.distracts[id]='fail';el.className='di fail';}
+  else{S.distracts[id]=null;el.className='di';}
+  saveS();
+}
+
+function setRating(key,val){
+  S.ratings[key]=val;
+  document.querySelectorAll('#sr-'+key+' .star').forEach((s,i)=>s.classList.toggle('lit',i<val));
+  document.getElementById('rv-'+key).textContent=RL[val];
+  saveS();
+}
+
+function updateScores(){
+  const pc=S.prayers.filter(Boolean).length;
+  const fitIds=['meditation','conditioning','footwork','strength','shadowbox'];
+  const seoIds=['seoCourse','seoPractical','keyword','seoReview'];
+  const famIds=['familyTime','sonTime','teachChildren','familyDua'];
+  const fC=fitIds.filter(id=>S.items[id]).length;
+  const sC=seoIds.filter(id=>S.items[id]).length;
+  const famC=famIds.filter(id=>S.items[id]).length;
+  const vpC=Object.values(S.vpItems).filter(Boolean).length;
+  const qB=(S.qrDone?1:0)+(S.qmDone?1:0);
+  const pC=['topThree','deepWork'].filter(id=>S.items[id]).length;
+  const tot=pc+fC+sC+famC+vpC+qB+pC;
+  const max=27;
+  const pct=Math.round((tot/max)*100);
+  const circ=163;
+  const rf=document.getElementById('ringFill');
+  rf.style.strokeDashoffset=circ-(pct/100)*circ;
+  rf.style.stroke=pct>=85?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+  document.getElementById('ringPct').textContent=pct+'%';
+  document.getElementById('prayerCount').textContent=pc;
+  document.getElementById('fitCount').textContent=fC;
+  document.getElementById('seoCount').textContent=sC;
+  document.getElementById('famCount').textContent=famC;
+  document.getElementById('vpCount').textContent=vpC;
+  document.getElementById('scOverall').textContent=pct+'%';
+  document.getElementById('scPrayer').textContent=pc+'/5';
+  document.getElementById('scFit').textContent=fC+'/5';
+  document.getElementById('scSeo').textContent=sC+'/4';
+  document.getElementById('scFam').textContent=famC+'/4';
+  document.getElementById('scQuran').textContent=vpC+'/5';
+  let g='';
+  if(pct>=100)g='🏆 PERFECT DAY';
+  else if(pct>=85)g='⚡ ELITE PERFORMANCE';
+  else if(pct>=70)g='💪 STRONG DAY';
+  else if(pct>=50)g='⚔ KEEP FIGHTING';
+  else if(pct>=25)g='🔥 GETTING STARTED';
+  else g='— Begin your day';
+  document.getElementById('scGrade').textContent=g;
+  document.getElementById('completeBanner').classList.toggle('show',pct===100);
+  updateMentor(pct);
+}
+
+function updateMentor(p){
+  const el=document.getElementById('mentorMsg');
+  let m='';
+  if(p===0)m='Begin. <b>The first prayer sets the tone.</b> Make wudu, answer the call of Fajr, and let the day follow that standard.';
+  else if(p<30)m='Started — but a warrior doesn\'t stop mid-battle. <b>Every unchecked item is a challenge waiting for you.</b> Push through.';
+  else if(p<50)m='Building momentum. <b>Now double down.</b> Your son watches the man you are becoming. Don\'t let comfort steal this day.';
+  else if(p<70)m='More than half conquered. <b>This is where ordinary men stop — warriors push harder.</b> Finish strong.';
+  else if(p<85)m='Strong day. <b>You are becoming dangerous</b> — to mediocrity, to complacency. A warrior doesn\'t leave the battlefield early.';
+  else if(p<100)m='Almost flawless. <b>The gap between 85% and 100% is a single choice.</b> Make it. Your future self thanks you.';
+  else m='<b>PERFECT DAY. Allahu Akbar.</b> You prayed. You trained. You learned. You led your family. This is what a Muslim warrior-father looks like. Do it again tomorrow.';
+  el.innerHTML=m;
+}
+
+function renderAll(){
+  for(let i=0;i<5;i++)document.getElementById('pc'+i).classList.toggle('done',!!S.prayers[i]);
+  ['jumuah','meditation','conditioning','footwork','strength','shadowbox','seoCourse','seoPractical','keyword','seoReview','topThree','deepWork','familyTime','sonTime','teachChildren','familyDua'].forEach(id=>{const el=document.getElementById('ci-'+id);if(el)el.classList.toggle('checked',!!S.items[id]);});
+  ['vp-fajr','vp-dhuhr','vp-asr','vp-maghrib','vp-isha'].forEach(id=>document.getElementById(id).classList.toggle('done',!!S.vpItems[id]));
+  ['d-morning','d-prayer','d-work','d-family','d-night','d-scroll'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const v=S.distracts[id];el.className='di'+(v==='pass'?' pass':v==='fail'?' fail':'');});
+  ['discipline','focus','spiritual','energy'].forEach(key=>{const v=S.ratings[key]||0;document.querySelectorAll('#sr-'+key+' .star').forEach((s,i)=>s.classList.toggle('lit',i<v));document.getElementById('rv-'+key).textContent=v>0?RL[v]:'—';});
+  document.getElementById('trainingNotes').value=S.notes.training||'';
+  document.getElementById('seoNotes').value=S.notes.seo||'';
+  document.getElementById('familyNotes').value=S.notes.family||'';
+  document.getElementById('nightReview').value=S.notes.night||'';
+  document.getElementById('goal1').value=S.goals[0]||'';
+  document.getElementById('goal2').value=S.goals[1]||'';
+  document.getElementById('goal3').value=S.goals[2]||'';
+  if(S.qrDone){document.getElementById('qc-recite').classList.add('done');document.getElementById('qst-recite').innerHTML='✓ <b>Recorded:</b> '+(S.qrVal||'');document.getElementById('qi-recite').value=S.qrVal||'';}
+  if(S.qmDone){document.getElementById('qc-memorize').classList.add('done');document.getElementById('qst-memorize').innerHTML='✓ <b>Memorized:</b> '+(S.qmVal||'');document.getElementById('qi-memorize').value=S.qmVal||'';}
+  updateScores();
+}
+
+function showToast(){const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+['trainingNotes','seoNotes','familyNotes','nightReview','goal1','goal2','goal3'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',saveS);});
+
+// INIT
+loadS();renderDate();renderAll();updateNav();
+document.getElementById('quoteText').textContent=QUOTES[new Date().getDate()%QUOTES.length];
+</script>
+</body>
+</html>
